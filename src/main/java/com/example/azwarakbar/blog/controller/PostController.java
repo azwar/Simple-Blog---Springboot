@@ -2,6 +2,7 @@ package com.example.azwarakbar.blog.controller;
 
 import com.example.azwarakbar.blog.exception.UnauthorizedException;
 import com.example.azwarakbar.blog.model.Post;
+import com.example.azwarakbar.blog.schema.MessageResponse;
 import com.example.azwarakbar.blog.service.PostService;
 import com.example.azwarakbar.blog.util.PagedResponse;
 import org.slf4j.Logger;
@@ -44,10 +45,10 @@ public class PostController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> addPost(@Valid @RequestBody Post post) throws UnauthorizedException {
-        postService.add(post);
+    public ResponseEntity<MessageResponse> addPost(@Valid @RequestBody Post post) throws UnauthorizedException {
+        ResponseEntity<MessageResponse> result = postService.add(post);
 
-        return new ResponseEntity<>(post, HttpStatus.OK);
+        return result;
     }
 
     @PutMapping("/{id}")

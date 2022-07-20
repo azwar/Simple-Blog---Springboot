@@ -42,7 +42,7 @@ public class Post {
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     @NotNull
-    @JsonIncludeProperties(value = {"id", "username"})
+    @JsonIncludeProperties(value = {"username"})
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)

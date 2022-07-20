@@ -12,7 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,9 +27,10 @@ public class CategoryServiceImp implements CategoryService {
 
     @Override
     public PagedResponse<Category> getAllCategories(int page) {
+        page = subtractPageByOne(page);
         Pageable pageable = PageRequest.of(page, 10);
         Page<Category> categories = categoryRepository.findAll(pageable);
-        List<Category> list = categories.getNumberOfElements() == 0 ? Collections.emptyList() : categories.getContent();
+        List<Category> list = categories.getContent();
 
         return new PagedResponse(list, page, (int) categories.getTotalElements());
     }
@@ -57,16 +57,16 @@ public class CategoryServiceImp implements CategoryService {
         return (page < 1) ? 0 : page - 1;
     }
 
-    public Optional<Category> update(Category inputCategory) {
-        Category category = categoryRepository.findById(inputCategory.getId()).orElseThrow(() -> new ResourceNotFoundException("Category", "id", inputCategory.getId()));
+    public Optional<Category> update(Long id, Category inputCategory) {
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
         category.setName(inputCategory.getName());
-        categoryRepository.save(category);
+        Category updatedCategory = categoryRepository.save(category);
 
-        return Optional.of(category);
+        return Optional.of(updatedCategory);
     }
 
     @Override
-    public Optional<Category> add(Category category) {
+    public void add(Category category) {
         Optional<Category> existingCategory = findByName(category.getName());
 
         if (!existingCategory.isEmpty()) {
@@ -74,6 +74,5 @@ public class CategoryServiceImp implements CategoryService {
         }
 
         Category tmpCategory = categoryRepository.save(category);
-        return Optional.of(tmpCategory);
     }
 }

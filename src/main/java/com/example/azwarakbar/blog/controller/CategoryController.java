@@ -1,6 +1,8 @@
 package com.example.azwarakbar.blog.controller;
 
 import com.example.azwarakbar.blog.exception.ResourceAlreadyExistException;
+import com.example.azwarakbar.blog.exception.ResourceNotFoundException;
+import com.example.azwarakbar.blog.exception.UnauthorizedException;
 import com.example.azwarakbar.blog.model.Category;
 import com.example.azwarakbar.blog.schema.MessageResponse;
 import com.example.azwarakbar.blog.secure.CurrentUser;
@@ -16,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/category")
@@ -50,13 +53,15 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Category> updateCategory(@PathVariable(name = "id") Long id, @Valid @RequestBody Category category) {
-        categoryService.update(category);
-        return new ResponseEntity<>(category, HttpStatus.OK);
+        Optional<Category> updatedCategory = categoryService.update(id, category);
+        return new ResponseEntity<>(updatedCategory.get(), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<MessageResponse> deleteCategory(@PathVariable(name = "id") Long id) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<MessageResponse> deleteCategory(@PathVariable(name = "id") Long id) throws UnauthorizedException, ResourceNotFoundException {
         categoryService.delete(id);
         MessageResponse response = new MessageResponse(true, "Category successfully deleted.");
         return ResponseEntity.ok(response);

@@ -55,6 +55,7 @@ public class SecutiryConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET, "/post/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/category/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/user/auth/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/users/checkUsernameAvailability", "/api/users/checkEmailAvailability").permitAll()
                 .anyRequest().authenticated();

@@ -1,9 +1,9 @@
 package com.example.azwarakbar.blog.service;
 
 import com.example.azwarakbar.blog.model.Post;
-import com.example.azwarakbar.blog.model.User;
+import com.example.azwarakbar.blog.schema.MessageResponse;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
 
@@ -15,7 +15,7 @@ public interface PostService {
     void delete(Post post);
 
     Page<Post> findByCategoryName(String category, int page);
-    Optional<Post> add(Post post);
-    Optional<Post> update(Post post);
+    ResponseEntity<MessageResponse> add(Post post);
+    void update(Post post);
 
 }

@@ -5,13 +5,17 @@ import com.example.azwarakbar.blog.model.Category;
 import com.example.azwarakbar.blog.model.Post;
 import com.example.azwarakbar.blog.repository.CategoryRepository;
 import com.example.azwarakbar.blog.repository.PostRepository;
+import com.example.azwarakbar.blog.schema.MessageResponse;
 import com.example.azwarakbar.blog.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+
+import static com.example.azwarakbar.blog.util.Pager.subtractPageByOne;
 
 @Service
 public class PostServiceImp implements PostService {
@@ -50,11 +54,7 @@ public class PostServiceImp implements PostService {
         return postRepository.findByCategoryName(category, PageRequest.of(subtractPageByOne(page), 10));
     }
 
-    private int subtractPageByOne(int page){
-        return (page < 1) ? 0 : page - 1;
-    }
-
-    public Optional<Post> update(Post inputPost) {
+    public void update(Post inputPost) {
         Post post = postRepository.findById(inputPost.getId()).orElseThrow(() -> new ResourceNotFoundException("Post", "id", inputPost.getId()));
         Category category = categoryRepository.findById(inputPost.getCategory().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", inputPost.getCategory().getId()));
@@ -70,12 +70,13 @@ public class PostServiceImp implements PostService {
         post.setCategory(category);
         postRepository.save(post);
 
-        return Optional.of(post);
     }
 
     @Override
-    public Optional<Post> add(Post post) {
+    public ResponseEntity<MessageResponse> add(Post post) {
+        post.setStatus(true);
         postRepository.save(post);
-        return Optional.empty();
+        MessageResponse response = new MessageResponse(true, "Blog post has been saved.");
+        return ResponseEntity.ok(response);
     }
 }
