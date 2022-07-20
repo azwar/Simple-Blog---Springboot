@@ -5,8 +5,10 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.Date;
 
 @Entity
@@ -39,4 +41,7 @@ public class Comment {
     @NotNull
     private User user;
 
+    public Comment(@NotBlank @Size(min = 5, message = "Comment body must be minimum 5 characters") String body) {
+        this.body = body;
+    }
 }

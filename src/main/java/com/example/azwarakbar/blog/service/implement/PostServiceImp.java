@@ -3,9 +3,14 @@ package com.example.azwarakbar.blog.service.implement;
 import com.example.azwarakbar.blog.exception.ResourceNotFoundException;
 import com.example.azwarakbar.blog.model.Category;
 import com.example.azwarakbar.blog.model.Post;
+import com.example.azwarakbar.blog.model.User;
 import com.example.azwarakbar.blog.repository.CategoryRepository;
 import com.example.azwarakbar.blog.repository.PostRepository;
+import com.example.azwarakbar.blog.repository.UserRepository;
 import com.example.azwarakbar.blog.schema.MessageResponse;
+import com.example.azwarakbar.blog.schema.RequestPost;
+import com.example.azwarakbar.blog.secure.CurrentUser;
+import com.example.azwarakbar.blog.secure.UserPrincipal;
 import com.example.azwarakbar.blog.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,11 +25,13 @@ import static com.example.azwarakbar.blog.util.Pager.subtractPageByOne;
 @Service
 public class PostServiceImp implements PostService {
 
+    private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
 
     @Autowired
-    public PostServiceImp(PostRepository postRepository, CategoryRepository categoryRepository) {
+    public PostServiceImp(UserRepository userRepository, PostRepository postRepository, CategoryRepository categoryRepository) {
+        this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.categoryRepository = categoryRepository;
     }
@@ -45,7 +52,8 @@ public class PostServiceImp implements PostService {
     }
 
     @Override
-    public void delete(Post post) {
+    public void delete(Long id) {
+        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post", "id", id));
         postRepository.delete(post);
     }
 
@@ -73,10 +81,30 @@ public class PostServiceImp implements PostService {
     }
 
     @Override
-    public ResponseEntity<MessageResponse> add(Post post) {
+    public ResponseEntity<MessageResponse> add(RequestPost reqPost, UserPrincipal currentUser) {
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUser.getId()));
+        Category category = categoryRepository.findById(reqPost.getCategory().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", reqPost.getCategory().getId()));
+
+        Post post = new Post();
+        post.setTitle(reqPost.getTitle());
+        post.setBody(reqPost.getBody());
+        post.setUser(user);
+        post.setCategory(category);
         post.setStatus(true);
         postRepository.save(post);
         MessageResponse response = new MessageResponse(true, "Blog post has been saved.");
         return ResponseEntity.ok(response);
     }
+
+    @Override
+    public Page<Post> findByUser(String username, int page) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+        PageRequest pageable = PageRequest.of(subtractPageByOne(page), 10);
+        Page<Post> post = postRepository.findByUser(user, pageable);
+        return post;
+    }
+
 }

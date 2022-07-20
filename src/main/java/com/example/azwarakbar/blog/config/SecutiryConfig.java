@@ -45,7 +45,6 @@ public class SecutiryConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-
         http.cors().and().csrf().disable()
                 .exceptionHandling()
                 .authenticationEntryPoint(unauthorizedHandler)
@@ -55,6 +54,7 @@ public class SecutiryConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET, "/post/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/user/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/category/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/user/auth/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/users/checkUsernameAvailability", "/api/users/checkEmailAvailability").permitAll()

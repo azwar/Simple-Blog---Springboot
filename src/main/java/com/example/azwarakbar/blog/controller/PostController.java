@@ -3,6 +3,9 @@ package com.example.azwarakbar.blog.controller;
 import com.example.azwarakbar.blog.exception.UnauthorizedException;
 import com.example.azwarakbar.blog.model.Post;
 import com.example.azwarakbar.blog.schema.MessageResponse;
+import com.example.azwarakbar.blog.schema.RequestPost;
+import com.example.azwarakbar.blog.secure.CurrentUser;
+import com.example.azwarakbar.blog.secure.UserPrincipal;
 import com.example.azwarakbar.blog.service.PostService;
 import com.example.azwarakbar.blog.util.PagedResponse;
 import org.slf4j.Logger;
@@ -29,7 +32,7 @@ public class PostController {
     }
 
     @GetMapping(value = {"/{category}", "/"}, params = { "page"})
-    public ResponseEntity<PagedResponse> getPostCategory(@PathVariable(required = false) Optional<String> category,
+    public ResponseEntity<PagedResponse> getPostList(@PathVariable(required = false) Optional<String> category,
                                    @RequestParam(value = "page", defaultValue = "0", required = false) int page) {
         Page<Post> pPost;
 
@@ -45,17 +48,25 @@ public class PostController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MessageResponse> addPost(@Valid @RequestBody Post post) throws UnauthorizedException {
-        ResponseEntity<MessageResponse> result = postService.add(post);
+    public ResponseEntity<MessageResponse> addPost(@Valid @RequestBody RequestPost post, @CurrentUser UserPrincipal currentUser) throws UnauthorizedException {
+        ResponseEntity<MessageResponse> result = postService.add(post, currentUser);
 
         return result;
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@PathVariable(name = "id") Long id, @Valid @RequestBody Post post) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<MessageResponse> updatePost(@PathVariable(name = "id") Long id, @Valid @RequestBody Post post) {
         postService.update(post);
 
-        return new ResponseEntity<>(post, HttpStatus.OK);
+        return ResponseEntity.ok(new MessageResponse(true, "Post successfully updated"));
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> deletePost(@PathVariable(name = "id") Long id) {
+        postService.delete(id);
+
+        return new ResponseEntity< >(new MessageResponse(true, "Post has been deleted"), HttpStatus.OK);
+    }
 }
