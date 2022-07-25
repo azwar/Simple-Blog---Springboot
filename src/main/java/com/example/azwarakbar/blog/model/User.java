@@ -38,6 +38,9 @@ public class User {
     @NotEmpty(message = "*Please provide your name")
     private String name;
 
+    @Column(name = "active", nullable = false)
+    private int active;
+
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Collection<Role> roles;

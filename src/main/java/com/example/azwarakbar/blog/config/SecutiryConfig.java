@@ -1,7 +1,8 @@
 package com.example.azwarakbar.blog.config;
 
-import com.example.azwarakbar.blog.model.Role;
+import com.example.azwarakbar.blog.exception.AuthenticationExceptionHandler;
 import com.example.azwarakbar.blog.repository.UserRepository;
+import com.example.azwarakbar.blog.secure.JWTAuthenticationFilterUser;
 import com.example.azwarakbar.blog.secure.JwtAuthenticationEntryPoint;
 import com.example.azwarakbar.blog.secure.JwtAuthenticationFilter;
 import com.example.azwarakbar.blog.service.implement.CustomUserDetailsServiceImpl;
@@ -20,6 +21,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
 
 @Configuration
 @EnableWebSecurity
@@ -55,13 +57,28 @@ public class SecutiryConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET, "/post/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/user/**").permitAll()
+                .antMatchers(HttpMethod.DELETE, "/user/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/category/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/user/auth/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/user/auth/login").anonymous()
                 .antMatchers(HttpMethod.GET, "/api/users/checkUsernameAvailability", "/api/users/checkEmailAvailability").permitAll()
-                .anyRequest().authenticated();
-
+                .anyRequest().authenticated()
+                .and().addFilter(new JWTAuthenticationFilterUser(authenticationManager()));
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.cors().configurationSource(c -> {
+            CorsConfiguration corsCfg = new CorsConfiguration();
 
+            // All origins, or specify the origins you need
+            corsCfg.addAllowedOriginPattern( "*" );
+
+            // If you really want to allow all methods
+            corsCfg.addAllowedMethod( CorsConfiguration.ALL );
+            corsCfg.addAllowedHeader(CorsConfiguration.ALL);
+            // If you want to allow specific methods only
+             corsCfg.addAllowedMethod( HttpMethod.GET );
+            // corsCfg.addAllowedMethod( HttpMethod.DELETE );
+            // ...
+            return corsCfg;
+        });
     }
 
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {

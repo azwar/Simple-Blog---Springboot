@@ -1,14 +1,7 @@
 package com.example.azwarakbar.blog.secure;
 
-
 import com.example.azwarakbar.blog.exception.UnauthorizedException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,28 +43,29 @@ public class JwtTokenProvider {
         return Long.valueOf(claims.getSubject());
     }
 
-    public boolean validateToken(String authToken) {
+    public boolean validateToken(String authToken) throws UnauthorizedException {
         try {
             Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
             return true;
         } catch (SignatureException ex) {
-            ex.printStackTrace();
             LOGGER.error("Invalid JWT signature");
-//            throw new UnauthorizedException("Invalid JWT signature");
+            throw new UnauthorizedException("Invalid JWT signature");
         } catch (MalformedJwtException ex) {
             LOGGER.error("Invalid JWT token");
-//            throw new UnauthorizedException("Invalid JWT token");
+            throw new UnauthorizedException("Invalid JWT token");
         } catch (ExpiredJwtException ex) {
             LOGGER.error("Expired JWT token");
-//            throw new UnauthorizedException("Expired JWT token");
+            throw new UnauthorizedException("Expired JWT token");
         } catch (UnsupportedJwtException ex) {
             LOGGER.error("Unsupported JWT token");
-//            throw new UnauthorizedException("Unsupported JWT token");
+            throw new UnauthorizedException("Unsupported JWT token");
         } catch (IllegalArgumentException ex) {
+//            ex.printStackTrace();
             LOGGER.error("JWT claims string is empty");
+            return false;
 //            throw new UnauthorizedException("JWT claims string is empty");
+        } catch (Exception e) {
+            throw e;
         }
-
-        return false;
     }
 }

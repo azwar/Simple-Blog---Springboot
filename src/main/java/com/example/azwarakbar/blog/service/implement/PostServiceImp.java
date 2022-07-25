@@ -3,6 +3,7 @@ package com.example.azwarakbar.blog.service.implement;
 import com.example.azwarakbar.blog.exception.ResourceNotFoundException;
 import com.example.azwarakbar.blog.model.Category;
 import com.example.azwarakbar.blog.model.Post;
+import com.example.azwarakbar.blog.model.RoleName;
 import com.example.azwarakbar.blog.model.User;
 import com.example.azwarakbar.blog.repository.CategoryRepository;
 import com.example.azwarakbar.blog.repository.PostRepository;
@@ -15,7 +16,9 @@ import com.example.azwarakbar.blog.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -47,8 +50,9 @@ public class PostServiceImp implements PostService {
     }
 
     @Override
-    public Page<Post> findAllOrderedByDatePageable(int page) {
-        return null;
+    public Page<Post> findAllByOrderByCreateDateDesc(int page) {
+        Pageable pageable = PageRequest.of(subtractPageByOne(page), 10);
+        return postRepository.findAllByOrderByCreateDateDesc(pageable);
     }
 
     @Override
@@ -62,22 +66,19 @@ public class PostServiceImp implements PostService {
         return postRepository.findByCategoryName(category, PageRequest.of(subtractPageByOne(page), 10));
     }
 
-    public void update(Post inputPost) {
-        Post post = postRepository.findById(inputPost.getId()).orElseThrow(() -> new ResourceNotFoundException("Post", "id", inputPost.getId()));
+    @Override
+    public void update(Long id, RequestPost inputPost, UserPrincipal currentUser) {
+        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post", "id", id));
         Category category = categoryRepository.findById(inputPost.getCategory().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", inputPost.getCategory().getId()));
-//        if (post.getUser().getId().equals(currentUser.getId())
-//                || currentUser.getAuthorities().contains(new SimpleGrantedAuthority(RoleName.ROLE_ADMIN.toString()))) {
-//            post.setTitle(newPostRequest.getTitle());
-//            post.setBody(newPostRequest.getBody());
-//            post.setCategory(category);
-//            return postRepository.save(post);
-//        }
-        post.setTitle(inputPost.getTitle());
-        post.setBody(inputPost.getBody());
-        post.setCategory(category);
-        postRepository.save(post);
 
+        if (post.getUser().getId().equals(currentUser.getId())) {
+            post.setTitle(inputPost.getTitle());
+            post.setBody(inputPost.getBody());
+            post.setCategory(category);
+            post.setStatus(inputPost.getStatus());
+            postRepository.save(post);
+        }
     }
 
     @Override

@@ -24,15 +24,18 @@ import java.util.Optional;
 @RequestMapping("/category")
 public class CategoryController {
     private final CategoryService categoryService;
-    Logger logger = LoggerFactory.getLogger(CategoryController.class);
 
     @Autowired
     public CategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
 
-    @GetMapping(value = "/", params = { "page"})
-    public ResponseEntity<PagedResponse> getListCategory(@RequestParam(value = "page", defaultValue = "0", required = false) int page) {
+    @GetMapping(value = "/")
+    public ResponseEntity<PagedResponse> getListCategory(@RequestParam(value = "page", required = false) Integer page) {
+        if (page == null) {
+            page = 0;
+        }
+
         PagedResponse<Category> category = categoryService.getAllCategories(page);
         return ResponseEntity.ok(category);
     }
@@ -45,18 +48,19 @@ public class CategoryController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Category> addCategory(@Valid @RequestBody Category category,
+    public ResponseEntity<MessageResponse> addCategory(@Valid @RequestBody Category category,
                                                 @CurrentUser UserPrincipal currentUser) throws ResourceAlreadyExistException {
         categoryService.add(category);
-
-        return new ResponseEntity<>(category, HttpStatus.OK);
+        MessageResponse response = new MessageResponse(true, "Category successfully saved.");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Category> updateCategory(@PathVariable(name = "id") Long id, @Valid @RequestBody Category category) {
-        Optional<Category> updatedCategory = categoryService.update(id, category);
-        return new ResponseEntity<>(updatedCategory.get(), HttpStatus.OK);
+    public ResponseEntity<MessageResponse> updateCategory(@PathVariable(name = "id") Long id, @Valid @RequestBody Category category) {
+        categoryService.update(id, category);
+        MessageResponse response = new MessageResponse(true, "Category successfully updated.");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

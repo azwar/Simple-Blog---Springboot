@@ -3,6 +3,9 @@ package com.example.azwarakbar.blog.config;
 import com.example.azwarakbar.blog.exception.*;
 import com.example.azwarakbar.blog.schema.MessageResponse;
 import com.example.azwarakbar.blog.schema.ResponseException;
+import com.example.azwarakbar.blog.secure.JwtAuthenticationEntryPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,6 +24,7 @@ import java.util.Objects;
 
 @ControllerAdvice
 public class RestControllerExceptionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestControllerExceptionHandler.class);
 
     public ResponseEntity<MessageResponse> resolveException(BlogException exception) {
         String message = exception.getMessage();
@@ -38,13 +42,14 @@ public class RestControllerExceptionHandler {
     @ResponseBody
     @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     public ResponseEntity<MessageResponse> resolveException(UnauthorizedException exception) {
-
+        LOGGER.error("Ini ada errornya");
         MessageResponse messageResponse = new MessageResponse();
-        messageResponse.setMessage("Unauthorized");
+        messageResponse.setMessage(exception.getMessage());
         messageResponse.setSuccess(false);
         messageResponse.setStatus(HttpStatus.UNAUTHORIZED);
+        exception.setMessageResponse(messageResponse);
 
-        return new ResponseEntity<>(messageResponse, HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(exception.getMessageResponse(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(BadRequestException.class)

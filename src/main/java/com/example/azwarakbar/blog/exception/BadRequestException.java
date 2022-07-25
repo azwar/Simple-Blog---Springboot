@@ -17,6 +17,7 @@ public class BadRequestException extends RuntimeException {
 
     public BadRequestException(String message) {
         super(message);
+        this.messageResponse = new MessageResponse(false, message);
     }
 
     public BadRequestException(String message, Throwable cause) {

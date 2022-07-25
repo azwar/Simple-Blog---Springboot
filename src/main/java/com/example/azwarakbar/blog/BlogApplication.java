@@ -1,5 +1,7 @@
 package com.example.azwarakbar.blog;
 
+import com.example.azwarakbar.blog.exception.AuthenticationExceptionHandler;
+import com.example.azwarakbar.blog.secure.JWTAuthenticationFilterUser;
 import com.example.azwarakbar.blog.secure.JwtAuthenticationFilter;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
@@ -20,6 +22,11 @@ public class BlogApplication {
 	@Bean
 	public JwtAuthenticationFilter jwtAuthenticationFilter() {
 		return new JwtAuthenticationFilter();
+	}
+
+	@Bean
+	public AuthenticationExceptionHandler authenticationExceptionHandler() {
+		return new AuthenticationExceptionHandler();
 	}
 
 	@Bean

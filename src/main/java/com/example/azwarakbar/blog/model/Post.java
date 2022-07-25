@@ -37,6 +37,7 @@ public class Post {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_date", nullable = false, updatable = false)
     @CreationTimestamp
+    @JsonFormat(pattern="yyyy-MMM-dd HH:mm")
     private Date createDate;
 
     @ManyToOne
