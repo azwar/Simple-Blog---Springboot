@@ -3,6 +3,8 @@ package com.example.azwarakbar.blog.repository;
 import com.example.azwarakbar.blog.exception.ResourceNotFoundException;
 import com.example.azwarakbar.blog.model.User;
 import com.example.azwarakbar.blog.secure.UserPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -29,4 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
         return findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
     }
+
+    Page<User> findAllByOrderByIdDesc(Pageable pageable);
 }

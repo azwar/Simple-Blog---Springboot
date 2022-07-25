@@ -1,6 +1,6 @@
 package com.example.azwarakbar.blog.controller;
 
-import com.example.azwarakbar.blog.exception.BlogException;
+import com.example.azwarakbar.blog.exception.*;
 import com.example.azwarakbar.blog.model.Post;
 import com.example.azwarakbar.blog.model.Role;
 import com.example.azwarakbar.blog.model.RoleName;
@@ -57,8 +57,7 @@ public class UserController {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
-    private Logger logger = LoggerFactory.getLogger(UserController.class);
-
+    private final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     @PostMapping("/auth/signup")
     public ResponseEntity<MessageResponse> registerUser(@Valid @RequestBody RequestSignup signupReq) throws BlogException {
@@ -132,5 +131,128 @@ public class UserController {
         PagedResponse pagedResponse = new PagedResponse(post.getContent(), page, (int) post.getTotalElements());
 
         return new ResponseEntity<>(pagedResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PagedResponse> listUser(@RequestParam(value = "page", defaultValue = "0", required = false) int page) {
+        Page<User> userPage = userService.findAllByOrderByIdDesc(page);
+        PagedResponse response = new PagedResponse(userPage.getContent(), page, (int) userPage.getTotalElements());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> deleteUser(@PathVariable(name = "id") Long id, @CurrentUser UserPrincipal currentUser)
+        throws UnauthorizedException {
+        userService.delete(id, currentUser);
+        MessageResponse response = new MessageResponse(true, "User successfully deleted");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/details/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<ObjectResponse> getUserDetails(@PathVariable(name = "id") Long id)
+            throws UnauthorizedException {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        ObjectResponse response = new ObjectResponse(true, user);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/add")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> addUser(@Valid @RequestBody RequestUser requestUser) throws BlogException {
+        if (Boolean.TRUE.equals(userRepository.existsByUsername(requestUser.getUsername()))) {
+            throw new BlogException(HttpStatus.CONFLICT, "Username is already registered");
+        }
+
+        if (Boolean.TRUE.equals(userRepository.existsByEmail(requestUser.getEmail()))) {
+            throw new BlogException(HttpStatus.CONFLICT, "Email is already registered");
+        }
+
+        String username = requestUser.getUsername().toLowerCase();
+        String email = requestUser.getEmail().toLowerCase();
+        String password = passwordEncoder.encode(requestUser.getPassword());
+
+        User user = new User(requestUser.getFirstName(), requestUser.getLastName(), username, email, password);
+
+        List<Role> roles = new ArrayList<>();
+
+        if (userRepository.count() == 0) {
+            roles.add(roleRepository.findByName(RoleName.ROLE_USER)
+                    .orElseThrow(() -> new BlogException(HttpStatus.INTERNAL_SERVER_ERROR, USER_ROLE_NOT_SET)));
+            roles.add(roleRepository.findByName(RoleName.ROLE_ADMIN)
+                    .orElseThrow(() -> new BlogException(HttpStatus.INTERNAL_SERVER_ERROR, USER_ROLE_NOT_SET)));
+        } else {
+            roles.add(roleRepository.findByName(RoleName.ROLE_USER)
+                    .orElseThrow(() -> new BlogException(HttpStatus.INTERNAL_SERVER_ERROR, USER_ROLE_NOT_SET)));
+
+            if (requestUser.getIsAdmin()) {
+                roles.add(roleRepository.findByName(RoleName.ROLE_ADMIN)
+                        .orElseThrow(() -> new BlogException(HttpStatus.INTERNAL_SERVER_ERROR, USER_ROLE_NOT_SET)));
+            }
+        }
+
+        user.setActive(1);
+        user.setRoles(roles);
+
+        User savedUser = userRepository.save(user);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/users/{userId}")
+                .buildAndExpand(savedUser.getId()).toUri();
+
+        MessageResponse response = new MessageResponse(Boolean.TRUE, "User added successfully");
+        return ResponseEntity.created(location).body(response);
+    }
+
+    @PostMapping("/update/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> updateUser(@PathVariable(name = "id") Long id,
+                                                      @Valid @RequestBody RequestUser requestUser) throws BlogException {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+        if (Boolean.TRUE.equals(userRepository.existsByEmail(requestUser.getEmail()))) {
+            if(!user.getEmail().equalsIgnoreCase(requestUser.getEmail())) {
+                throw new BadRequestException("Email is already used by other user, update using other email is not allowed");
+            }
+        }
+
+        String username = requestUser.getUsername().toLowerCase();
+        String email = requestUser.getEmail().toLowerCase();
+        String inputPassword = requestUser.getPassword();
+        String fullName = requestUser.getFirstName() + ' ' + requestUser.getLastName();
+
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setName(fullName);
+
+        if (inputPassword != null && inputPassword.length() > 0) {
+            if (inputPassword.length() < 6) {
+                throw new BadRequestException("Password must be at least 6 characters. Let it empty if you don't want to update.");
+            } else {
+                String password = passwordEncoder.encode(inputPassword);
+                user.setPassword(password);
+            }
+        }
+
+        List<Role> roles = new ArrayList<>();
+
+        roles.add(roleRepository.findByName(RoleName.ROLE_USER)
+                .orElseThrow(() -> new BlogException(HttpStatus.INTERNAL_SERVER_ERROR, USER_ROLE_NOT_SET)));
+
+        if (requestUser.getIsAdmin()) {
+            roles.add(roleRepository.findByName(RoleName.ROLE_ADMIN)
+                    .orElseThrow(() -> new BlogException(HttpStatus.INTERNAL_SERVER_ERROR, USER_ROLE_NOT_SET)));
+        }
+
+        user.setRoles(roles);
+
+        userRepository.save(user);
+
+
+        MessageResponse response = new MessageResponse(Boolean.TRUE, "User updated successfully");
+        return ResponseEntity.ok(response);
     }
 }
