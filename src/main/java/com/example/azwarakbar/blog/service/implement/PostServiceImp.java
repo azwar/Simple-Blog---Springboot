@@ -3,14 +3,12 @@ package com.example.azwarakbar.blog.service.implement;
 import com.example.azwarakbar.blog.exception.ResourceNotFoundException;
 import com.example.azwarakbar.blog.model.Category;
 import com.example.azwarakbar.blog.model.Post;
-import com.example.azwarakbar.blog.model.RoleName;
 import com.example.azwarakbar.blog.model.User;
 import com.example.azwarakbar.blog.repository.CategoryRepository;
 import com.example.azwarakbar.blog.repository.PostRepository;
 import com.example.azwarakbar.blog.repository.UserRepository;
 import com.example.azwarakbar.blog.schema.MessageResponse;
 import com.example.azwarakbar.blog.schema.RequestPost;
-import com.example.azwarakbar.blog.secure.CurrentUser;
 import com.example.azwarakbar.blog.secure.UserPrincipal;
 import com.example.azwarakbar.blog.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -46,7 +43,7 @@ public class PostServiceImp implements PostService {
 
     @Override
     public Page<Post> findByStatusTrue(int page) {
-        return postRepository.findByStatusTrue(PageRequest.of(subtractPageByOne(page), 10));
+        return postRepository.findByStatusTrueOrderByCreateDateDesc(PageRequest.of(subtractPageByOne(page), 10));
     }
 
     @Override

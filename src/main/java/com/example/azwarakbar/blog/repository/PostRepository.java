@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findByUserOrderByCreateDateDesc(User user, Pageable pageable);
-    Page<Post> findByStatusTrue(Pageable pageable);
+    Page<Post> findByStatusTrueOrderByCreateDateDesc(Pageable pageable);
     Optional<Post> findById(Long id);
     Page<Post> findByUser(User user, Pageable pageable);
     Page<Post> findByCategoryName(String category, Pageable pageable);
